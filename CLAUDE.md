@@ -299,7 +299,7 @@ Quando encontrar uma decisão que possa afetar significativamente:
 - O modelo comercial.
 - O modelo de dados.
 - A experiência dos usuários.
-- A escalabilidade.CLAUDE.md
+- A escalabilidade.
 
 Explique o impacto e apresente uma recomendação antes de seguir.
 
