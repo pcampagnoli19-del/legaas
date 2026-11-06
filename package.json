@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
+    "db:seed": "tsx -r ./tests/setup/server-only-stub.ts --env-file=.env src/scripts/seed-dev.ts",
     "org:provision": "tsx -r ./tests/setup/server-only-stub.ts --env-file=.env src/scripts/provision-org.ts",
     "test": "vitest run",
     "e2e": "playwright test"
