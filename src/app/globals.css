@@ -1,0 +1,44 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+ * LEGAAS — Design Tokens (Decisão A10 + Identidade Oficial)
+ * Estilo corporativo sóbrio, apenas modo claro no MVP:
+ * - Navy Primário da Marca (do logotipo oficial): #03193A
+ * - Acento Esmeralda Técnico (do logotipo oficial): #14C38E
+ * - Escala neutra estrutural: Slate / Zinc
+ * ========================================================================== */
+
+:root {
+  --brand-navy: #03193a;
+  --brand-navy-elevated: #07234f;
+  --brand-emerald: #14c38e;
+  --brand-emerald-dark: #0f9f73;
+
+  --surface-canvas: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-elevated: var(--brand-navy-elevated);
+  --color-brand-emerald: var(--brand-emerald);
+  --color-brand-emerald-dark: var(--brand-emerald-dark);
+}
+
+html,
+body {
+  background-color: var(--surface-canvas);
+  color: var(--text-primary);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+}
