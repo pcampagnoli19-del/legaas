@@ -56,14 +56,14 @@ Objetivo: entregar uma primeira versão utilizável do Legaas Office, capaz de a
 
 ## 1.1. Autenticação e organizações
 
-- [ ] Cadastro e autenticação.
-- [ ] Login e logout.
-- [ ] Recuperação de senha.
-- [ ] Cadastro de organizações.
-- [ ] Associação de usuários às organizações.
-- [ ] Isolamento multi-tenant.
-- [ ] Contexto da organização ativa.
-- [ ] Gestão de sessões.
+- [x] Cadastro e autenticação.
+- [x] Login e logout.
+- [x] Recuperação de senha.
+- [x] Cadastro de organizações.
+- [x] Associação de usuários às organizações.
+- [x] Isolamento multi-tenant.
+- [x] Contexto da organização ativa.
+- [x] Gestão de sessões.
 
 ## 1.2. Usuários e permissões
 
