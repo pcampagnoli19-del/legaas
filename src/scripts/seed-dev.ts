@@ -87,22 +87,24 @@ async function ensureClusterDatabasesAndRoles(ownerUrl: string): Promise<void> {
   }
 }
 
-async function ensureMigrationsApplied(sqlClient: import('postgres').Sql): Promise<void> {
-  const [{ exists }] = await sqlClient<Array<{ exists: boolean }>>`
+async function ensureMigrationsApplied(sqlClient: postgres.Sql): Promise<void> {
+  const existsRows = await sqlClient<Array<{ exists: boolean }>>`
     SELECT EXISTS (
       SELECT 1 FROM information_schema.tables
       WHERE table_schema = 'public' AND table_name = 'organizations'
     ) AS exists
   `;
+  const exists = Boolean(existsRows[0]?.exists);
 
-  const [{ fn_exists }] = await sqlClient<Array<{ fn_exists: boolean }>>`
+  const fnRows = await sqlClient<Array<{ fn_exists: boolean }>>`
     SELECT EXISTS (
       SELECT 1 FROM pg_proc
       WHERE proname = 'legaas_accept_invitation'
     ) AS fn_exists
   `;
+  const fnExists = Boolean(fnRows[0]?.fn_exists);
 
-  if (exists && fn_exists) {
+  if (exists && fnExists) {
     return;
   }
 
@@ -174,7 +176,7 @@ async function main() {
         const passwordHash = await hashPassword(ADMIN_PASSWORD);
         await ownerHandle.db
           .update(accounts)
-          .set({ passwordHash, updatedAt: new Date() })
+          .set({ password: passwordHash, updatedAt: new Date() })
           .where(eq(accounts.userId, adminUser.id));
       }
     }
@@ -225,7 +227,7 @@ async function main() {
       const passwordHash = await hashPassword(ANALYST_PASSWORD);
       await ownerHandle.db
         .update(accounts)
-        .set({ passwordHash, updatedAt: new Date() })
+        .set({ password: passwordHash, updatedAt: new Date() })
         .where(eq(accounts.userId, analystMember.userId));
     }
 
