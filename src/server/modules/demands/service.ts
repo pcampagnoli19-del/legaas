@@ -19,6 +19,7 @@ import {
   users,
   workflows,
   workflowStages,
+  workflowTransitions,
 } from '@/server/db/schema';
 import { type AnyPgDatabase, withTenant } from '@/server/db/tenant';
 import { ForbiddenError, NotFoundError, ValidationError } from '@/server/errors/app-error';
@@ -55,6 +56,13 @@ export interface DemandSummaryDTO {
   openedAt: Date;
   completedAt: Date | null;
   updatedAt: Date;
+}
+
+export interface DemandWorkflowOption {
+  id: string;
+  name: string;
+  description: string | null;
+  isDefault: boolean;
 }
 
 export interface DemandWorkflowStageOption {
@@ -121,6 +129,7 @@ export interface DemandDetailsDTO extends DemandSummaryDTO {
   createdByMembershipId: string;
   createdByName: string;
   availableStages: DemandWorkflowStageOption[];
+  allowedTargetStageIds: string[];
   participants: DemandParticipantDTO[];
   stageHistory: DemandStageHistoryEntryDTO[];
   comments: DemandCommentDTO[];
@@ -139,12 +148,13 @@ export interface ListDemandsFilter {
 }
 
 export interface DemandCatalogMetadata {
+  workflows: DemandWorkflowOption[];
   serviceTypes: DemandServiceTypeOption[];
   stages: DemandWorkflowStageOption[];
 }
 
 /**
- * Retorna os tipos de serviço e etapas de workflow disponíveis na organização
+ * Retorna as esteiras ativas, tipos de serviço e etapas de workflow disponíveis na organização
  * para popular formulários e filtros de demandas.
  */
 export async function listDemandCatalogMetadata(
@@ -159,6 +169,17 @@ export async function listDemandCatalogMetadata(
       actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
+      const wfRows = await tx
+        .select({
+          id: workflows.id,
+          name: workflows.name,
+          description: workflows.description,
+          isDefault: workflows.isDefault,
+        })
+        .from(workflows)
+        .where(and(eq(workflows.organizationId, ctx.organizationId), isNull(workflows.archivedAt)))
+        .orderBy(asc(workflows.createdAt));
+
       const svcRows = await tx
         .select({
           id: serviceTypes.id,
@@ -200,6 +221,7 @@ export async function listDemandCatalogMetadata(
         .orderBy(asc(workflowStages.position));
 
       return {
+        workflows: wfRows,
         serviceTypes: svcRows,
         stages: stageRows,
       };
@@ -427,6 +449,7 @@ export async function createDemand(
     clientId: string;
     companyId?: string | null;
     serviceTypeId?: string | null;
+    workflowId?: string | null;
     departmentId: string;
     assigneeMembershipId?: string | null;
     stageId?: string | null;
@@ -568,7 +591,27 @@ export async function createDemand(
         resolvedServiceType = defaultSvc;
       }
 
-      const workflowId = resolvedServiceType.defaultWorkflowId;
+      let workflowId = resolvedServiceType.defaultWorkflowId;
+      if (input.workflowId) {
+        const [wfRow] = await tx
+          .select({ id: workflows.id })
+          .from(workflows)
+          .where(
+            and(
+              eq(workflows.organizationId, ctx.organizationId),
+              eq(workflows.id, input.workflowId),
+              isNull(workflows.archivedAt),
+            ),
+          )
+          .limit(1);
+
+        if (!wfRow) {
+          throw new NotFoundError(
+            'Workflow selecionado não encontrado ou inativo nesta organização.',
+          );
+        }
+        workflowId = wfRow.id;
+      }
 
       // 6. Resolve etapa inicial do workflow
       let resolvedStage;
@@ -698,6 +741,7 @@ export async function createDemand(
           companyId: created!.companyId,
           departmentId: created!.departmentId,
           assigneeMembershipId: created!.assigneeMembershipId,
+          workflowId,
           stageId: resolvedStage.id,
           stageName: resolvedStage.name,
           statusCategory: created!.statusCategory,
@@ -720,7 +764,8 @@ export async function createDemand(
 
 /**
  * Transiciona a etapa (`stageId`) e o status derivado (`statusCategory` — Decisão A6) de uma demanda,
- * gravando o histórico em `demand_stage_history` e um registro imutável em `activity_log`.
+ * validando as regras de transição configuradas (`workflow_transitions`) e gravando o histórico
+ * em `demand_stage_history` e no `activity_log` imutável.
  */
 export async function transitionDemandStage(
   ctx: OfficeTenantContext,
@@ -802,6 +847,33 @@ export async function transitionDemandStage(
         throw new ValidationError(
           'A etapa de destino não existe ou não pertence ao workflow desta demanda.',
         );
+      }
+
+      // Valida bloqueios e regras de transição configuradas para esta esteira (workflow_transitions)
+      if (existing.stageId !== targetStage.id) {
+        const configuredRules = await tx
+          .select({
+            fromStageId: workflowTransitions.fromStageId,
+            toStageId: workflowTransitions.toStageId,
+          })
+          .from(workflowTransitions)
+          .where(
+            and(
+              eq(workflowTransitions.organizationId, ctx.organizationId),
+              eq(workflowTransitions.workflowId, existing.workflowId),
+            ),
+          );
+
+        if (configuredRules.length > 0) {
+          const isAllowed = configuredRules.some(
+            (r) => r.fromStageId === existing.stageId && r.toStageId === targetStage.id,
+          );
+          if (!isAllowed) {
+            throw new ValidationError(
+              `Transição bloqueada pelas regras desta esteira: a etapa "${fromStage?.name ?? 'Atual'}" não permite movimentação direta para "${targetStage.name}".`,
+            );
+          }
+        }
       }
 
       const nextStatusCategory = targetStage.category;
@@ -1511,6 +1583,31 @@ export async function getDemandDetails(
         stageNameMap.set(st.id, { name: st.name, category: st.category });
       }
 
+      const configuredTransitions = await tx
+        .select({
+          fromStageId: workflowTransitions.fromStageId,
+          toStageId: workflowTransitions.toStageId,
+        })
+        .from(workflowTransitions)
+        .where(
+          and(
+            eq(workflowTransitions.organizationId, ctx.organizationId),
+            eq(workflowTransitions.workflowId, row.workflowId),
+          ),
+        );
+
+      const allowedTargetStageIds =
+        configuredTransitions.length === 0
+          ? availableStages.map((s) => s.id)
+          : Array.from(
+              new Set([
+                row.stageId,
+                ...configuredTransitions
+                  .filter((r) => r.fromStageId === row.stageId)
+                  .map((r) => r.toStageId),
+              ]),
+            );
+
       const historyRows = await tx
         .select({
           id: demandStageHistory.id,
@@ -1618,6 +1715,7 @@ export async function getDemandDetails(
         completedAt: row.completedAt,
         updatedAt: row.updatedAt,
         availableStages,
+        allowedTargetStageIds,
         participants: partRows,
         stageHistory: historyRows.map((h) => ({
           id: h.id,
