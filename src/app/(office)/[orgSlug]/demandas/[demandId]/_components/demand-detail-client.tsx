@@ -125,6 +125,7 @@ export interface SerializedDemandDetails {
   createdByMembershipId: string;
   createdByName: string;
   availableStages: DemandWorkflowStageOption[];
+  allowedTargetStageIds: string[];
   participants: SerializedDemandParticipant[];
   stageHistory: SerializedStageHistoryEntry[];
   comments: SerializedDemandComment[];
@@ -234,7 +235,9 @@ export function DemandDetailClient({
   } | null>(null);
 
   // Estado para transição de etapa do workflow
-  const [targetStageId, setTargetStageId] = useState(demand.stageId);
+  const [targetStageId, setTargetStageId] = useState(
+    demand.allowedTargetStageIds[0] ?? demand.stageId,
+  );
   const [transitionNote, setTransitionNote] = useState('');
 
   // Estado para edição dos dados vinculados da demanda
@@ -530,27 +533,31 @@ export function DemandDetailClient({
           <CardTitle>Esteira de Workflow · {demand.workflowName}</CardTitle>
           <CardDescription>
             O status da demanda é derivado automaticamente da categoria da etapa atual (Decisão A6).
-            Cada transição grava registro em demand_stage_history e no activity_log imutável.
+            Cada transição respeita as regras configuradas na esteira e grava registro em
+            demand_stage_history e no activity_log imutável.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
             {demand.availableStages.map((stage) => {
               const isCurrent = stage.id === demand.stageId;
+              const isAllowedTarget = isCurrent || demand.allowedTargetStageIds.includes(stage.id);
               const isSelectedTarget = stage.id === targetStageId;
               return (
                 <button
                   key={stage.id}
                   type="button"
-                  disabled={!canUpdate}
+                  disabled={!canUpdate || !isAllowedTarget}
                   onClick={() => handleQuickStageSelect(stage.id)}
                   className={`flex flex-col justify-between rounded-md border p-3 text-left transition-all ${
                     isCurrent
                       ? 'border-brand-navy bg-brand-navy/5 ring-brand-navy/30 ring-1'
-                      : isSelectedTarget && canUpdate
-                        ? 'border-emerald-500 bg-emerald-50/40'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                  } ${!canUpdate ? 'cursor-default' : 'cursor-pointer'}`}
+                      : !isAllowedTarget
+                        ? 'border-slate-200 bg-slate-50/70 opacity-55'
+                        : isSelectedTarget && canUpdate
+                          ? 'border-emerald-500 bg-emerald-50/40'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                  } ${!canUpdate || !isAllowedTarget ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-mono text-[10px] font-semibold text-slate-400">
@@ -558,6 +565,8 @@ export function DemandDetailClient({
                     </span>
                     {isCurrent ? (
                       <Badge variant="default">Atual</Badge>
+                    ) : !isAllowedTarget ? (
+                      <Badge variant="outline">Bloqueada</Badge>
                     ) : isSelectedTarget && canUpdate ? (
                       <Badge variant="emerald">Destino</Badge>
                     ) : null}
@@ -584,11 +593,17 @@ export function DemandDetailClient({
                     onChange={(e) => setTargetStageId(e.target.value)}
                     className="focus-visible:ring-brand-navy flex h-9 w-full rounded-md border border-slate-300 bg-white px-3 py-1 text-xs text-slate-900 shadow-2xs focus-visible:ring-2 focus-visible:outline-hidden"
                   >
-                    {demand.availableStages.map((stage) => (
-                      <option key={stage.id} value={stage.id}>
-                        {stage.position}. {stage.name} ({STATUS_CATEGORY_LABELS[stage.category]})
-                      </option>
-                    ))}
+                    {demand.availableStages.map((stage) => {
+                      const isCurrent = stage.id === demand.stageId;
+                      const isAllowedTarget =
+                        isCurrent || demand.allowedTargetStageIds.includes(stage.id);
+                      return (
+                        <option key={stage.id} value={stage.id} disabled={!isAllowedTarget}>
+                          {stage.position}. {stage.name} ({STATUS_CATEGORY_LABELS[stage.category]})
+                          {isCurrent ? ' — Atual' : !isAllowedTarget ? ' — Bloqueada' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </FormField>
               </div>

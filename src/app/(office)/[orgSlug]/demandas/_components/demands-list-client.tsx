@@ -29,6 +29,7 @@ import { createDemandAction } from '@/server/modules/demands/actions';
 import type {
   DemandPriority,
   DemandServiceTypeOption,
+  DemandWorkflowOption,
   DemandWorkflowStageOption,
   WorkflowStageCategory,
 } from '@/server/modules/demands/service';
@@ -110,6 +111,7 @@ interface DemandsListClientProps {
   departments: DemandDepartmentOption[];
   members: DemandMemberOption[];
   serviceTypes: DemandServiceTypeOption[];
+  workflows: DemandWorkflowOption[];
   stages: DemandWorkflowStageOption[];
   initialFilters: {
     search: string;
@@ -194,6 +196,7 @@ export function DemandsListClient({
   departments,
   members,
   serviceTypes,
+  workflows,
   stages,
   initialFilters,
 }: DemandsListClientProps) {
@@ -232,6 +235,9 @@ export function DemandsListClient({
   const [formClientId, setFormClientId] = useState(clients[0]?.id ?? '');
   const [formCompanyId, setFormCompanyId] = useState('');
   const [formServiceTypeId, setFormServiceTypeId] = useState(defaultSvc?.id ?? '');
+  const [formWorkflowId, setFormWorkflowId] = useState(
+    defaultSvc?.defaultWorkflowId ?? workflows[0]?.id ?? '',
+  );
   const [formStageId, setFormStageId] = useState('');
   const [formDepartmentId, setFormDepartmentId] = useState(initialDepartmentId);
   const [formAssigneeId, setFormAssigneeId] = useState(actorMembershipId);
@@ -257,12 +263,15 @@ export function DemandsListClient({
     return companies.filter((c) => c.clientId === formClientId);
   }, [companies, formClientId]);
 
-  // Filtra etapas do workflow do serviço selecionado
+  // Filtra etapas da esteira (workflow ativo) selecionada na abertura da demanda (Fase 1.7)
   const formStageOptions = useMemo(() => {
+    if (formWorkflowId) {
+      return stages.filter((st) => st.workflowId === formWorkflowId);
+    }
     const selectedSvc = serviceTypes.find((s) => s.id === formServiceTypeId);
     if (!selectedSvc) return stages;
     return stages.filter((st) => st.workflowId === selectedSvc.defaultWorkflowId);
-  }, [formServiceTypeId, serviceTypes, stages]);
+  }, [formServiceTypeId, formWorkflowId, serviceTypes, stages]);
 
   // Indicadores calculados a partir dos registros reais retornados pelo banco
   const metrics = useMemo(() => {
@@ -330,6 +339,9 @@ export function DemandsListClient({
     setFormServiceTypeId(nextServiceTypeId);
     setFormStageId('');
     const svc = serviceTypes.find((s) => s.id === nextServiceTypeId);
+    if (svc?.defaultWorkflowId) {
+      setFormWorkflowId(svc.defaultWorkflowId);
+    }
     if (
       svc?.defaultDepartmentId &&
       allowedDepartmentsForCreation.some((d) => d.id === svc.defaultDepartmentId)
@@ -350,6 +362,7 @@ export function DemandsListClient({
         clientId: formClientId,
         companyId: formCompanyId || null,
         serviceTypeId: formServiceTypeId || null,
+        workflowId: formWorkflowId || null,
         stageId: formStageId || null,
         departmentId: formDepartmentId,
         assigneeMembershipId: formAssigneeId || null,
@@ -831,7 +844,7 @@ export function DemandsListClient({
                     </FormField>
                   </div>
 
-                  <FormField label="Tipo de Serviço e Workflow" id="demand-service-type" required>
+                  <FormField label="Tipo de Serviço" id="demand-service-type" required>
                     <select
                       id="demand-service-type"
                       value={formServiceTypeId}
@@ -842,6 +855,31 @@ export function DemandsListClient({
                       {serviceTypes.map((svc) => (
                         <option key={svc.id} value={svc.id}>
                           {svc.categoryName} · {svc.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+
+                  <FormField
+                    label="Esteira de Atendimento (Workflow Ativo)"
+                    id="demand-workflow"
+                    hint="Reflete as esteiras ativas configuradas em /configuracoes/workflows."
+                    required
+                  >
+                    <select
+                      id="demand-workflow"
+                      value={formWorkflowId}
+                      onChange={(e) => {
+                        setFormWorkflowId(e.target.value);
+                        setFormStageId('');
+                      }}
+                      className="focus-visible:ring-brand-navy flex h-9 w-full rounded-md border border-slate-300 bg-white px-3 py-1 text-xs text-slate-900 shadow-2xs focus-visible:ring-2 focus-visible:outline-hidden"
+                      required
+                    >
+                      {workflows.map((wf) => (
+                        <option key={wf.id} value={wf.id}>
+                          {wf.name}
+                          {wf.isDefault ? ' (Padrão)' : ''}
                         </option>
                       ))}
                     </select>
@@ -925,7 +963,7 @@ export function DemandsListClient({
                       onChange={(e) => setFormStageId(e.target.value)}
                       className="focus-visible:ring-brand-navy flex h-9 w-full rounded-md border border-slate-300 bg-white px-3 py-1 text-xs text-slate-900 shadow-2xs focus-visible:ring-2 focus-visible:outline-hidden"
                     >
-                      <option value="">Primeira etapa padrão do workflow</option>
+                      <option value="">Primeira etapa padrão da esteira (Posição 1)</option>
                       {formStageOptions.map((st) => (
                         <option key={st.id} value={st.id}>
                           {st.position}. {st.name} ({STATUS_CATEGORY_LABELS[st.category]})
