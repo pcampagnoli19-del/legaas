@@ -16,7 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
-    "org:provision": "node --env-file-if-exists=.env src/scripts/provision-org.ts",
+    "org:provision": "tsx -r ./tests/setup/server-only-stub.ts --env-file=.env src/scripts/provision-org.ts",
     "test": "vitest run",
     "e2e": "playwright test"
   },
@@ -49,6 +49,7 @@
     "postcss": "^8.5.32",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.4",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
     "vitest": "^5.1.0"

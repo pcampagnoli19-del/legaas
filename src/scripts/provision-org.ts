@@ -1,6 +1,7 @@
 import { parseArgs } from 'node:util';
-import { getServerEnv } from '../env';
-import { provisionOrganization } from '../server/modules/organizations/service';
+import { getServerEnv } from '@/env';
+import { resolveRuntimeOrEmbeddedDb } from '@/server/db/client';
+import { provisionOrganization } from '@/server/modules/organizations/service';
 
 async function main() {
   const { values } = parseArgs({
@@ -20,28 +21,36 @@ async function main() {
   }
 
   const env = getServerEnv();
-  const provisioned = await provisionOrganization({
-    name: values.name,
-    slug: values.slug,
-    adminEmail: values.email,
-    timezone: values.timezone,
-  });
+  const handle = await resolveRuntimeOrEmbeddedDb(true);
 
-  const inviteUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/convite/${provisioned.rawInviteToken}`;
+  try {
+    const provisioned = await provisionOrganization(
+      {
+        name: values.name,
+        slug: values.slug,
+        adminEmail: values.email,
+        timezone: values.timezone,
+      },
+      handle.db,
+    );
 
-  console.log('\n============================================================');
-  console.log('ORGANIZAÇÃO PROVISIONADA COM SUCESSO (Decisão A4)');
-  console.log('============================================================');
-  console.log(`Organização : ${provisioned.name}`);
-  console.log(`Slug        : /${provisioned.slug}`);
-  console.log(`ID          : ${provisioned.organizationId}`);
-  console.log(`Admin E-mail: ${provisioned.adminEmail}`);
-  console.log(`Expira em   : ${provisioned.inviteExpiresAt.toISOString()}`);
-  console.log('------------------------------------------------------------');
-  console.log('Link de Convite de Uso Único (envie ao Administrador):');
-  console.log(inviteUrl);
-  console.log('============================================================\n');
-  process.exit(0);
+    const inviteUrl = `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}/convite/${provisioned.rawInviteToken}`;
+
+    console.log('\n============================================================');
+    console.log('ORGANIZAÇÃO PROVISIONADA COM SUCESSO (Decisão A4)');
+    console.log('============================================================');
+    console.log(`Organização : ${provisioned.name}`);
+    console.log(`Slug        : /${provisioned.slug}`);
+    console.log(`ID          : ${provisioned.organizationId}`);
+    console.log(`Admin E-mail: ${provisioned.adminEmail}`);
+    console.log(`Expira em   : ${provisioned.inviteExpiresAt.toISOString()}`);
+    console.log('------------------------------------------------------------');
+    console.log('Link de Convite de Uso Único (envie ao Administrador):');
+    console.log(inviteUrl);
+    console.log('============================================================\n');
+  } finally {
+    await handle.close();
+  }
 }
 
 main().catch((err) => {
