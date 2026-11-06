@@ -92,14 +92,11 @@ export function createValidatedAction<TSchema extends z.ZodTypeAny, TOutput>(par
  *    qualquer manipulação de `orgSlug` para outra organização.
  * 4. Valida a permissão RBAC (`assertPermission`) antes de executar a regra de domínio.
  */
-export function createOfficeAction<
-  TSchema extends z.ZodObject<{ orgSlug: z.ZodString } & z.ZodRawShape>,
-  TOutput,
->(params: {
+export function createOfficeAction<TInput extends { orgSlug: string }, TOutput>(params: {
   name: string;
   permission?: PermissionAction;
-  schema: TSchema;
-  handler: (args: { ctx: OfficeTenantContext; input: z.infer<TSchema> }) => Promise<TOutput>;
+  schema: z.ZodType<TInput>;
+  handler: (args: { ctx: OfficeTenantContext; input: TInput }) => Promise<TOutput>;
 }): (rawInput: unknown) => Promise<ActionResult<TOutput>> {
   return async (rawInput: unknown): Promise<ActionResult<TOutput>> => {
     return executeSafeAction(params.name, async () => {
