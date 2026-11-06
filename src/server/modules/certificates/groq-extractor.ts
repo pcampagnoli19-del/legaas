@@ -395,11 +395,17 @@ export function extractCertificateMetadataDeterministic(
 
   // Código de controle / autenticidade
   let controlCode: string | null = null;
-  const codeMatch = combinedSource.match(
-    /(?:c[óo]digo\s+de\s+controle|autenticidade|certid[ãa]o\s+n[º°o.]*|n[úu]mero\s+da\s+certid[ãa]o)[:\s]*([A-Z0-9./-]{6,32})/i,
-  );
-  if (codeMatch?.[1]) {
-    controlCode = codeMatch[1]!.trim();
+  const codePatterns = [
+    /(?:c[óo]digo\s+de\s+controle(?:\s+da\s+certid[ãa]o)?|c[óo]digo\s+de\s+autenticidade|c[óo]digo\s+verificador)[:\s]*([A-Z0-9./-]{6,32})/i,
+    /(?:autenticidade|chave\s+de\s+autentica[çc][ãa]o)[:\s]*([A-Z0-9./-]{6,32})/i,
+    /(?:certid[ãa]o\s+n[º°o.]+|n[úu]mero\s+da\s+certid[ãa]o)[:\s]*([A-Z0-9./-]{6,32})/i,
+  ];
+  for (const pattern of codePatterns) {
+    const match = combinedSource.match(pattern);
+    if (match?.[1]) {
+      controlCode = match[1].trim();
+      break;
+    }
   }
 
   const confidence: 'high' | 'medium' | 'low' =
@@ -446,9 +452,18 @@ export async function analyzeCertificatePdfWithGroq(params: {
     params.originalFileName,
   );
 
-  const env = getServerEnv();
-  const apiKey = env.GROQ_API_KEY?.trim();
-  const model = env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  let apiKey: string | undefined = process.env.GROQ_API_KEY?.trim();
+  let model: string = process.env.GROQ_MODEL?.trim() || 'llama-3.3-70b-versatile';
+
+  if (!apiKey) {
+    try {
+      const env = getServerEnv();
+      apiKey = env.GROQ_API_KEY?.trim();
+      model = env.GROQ_MODEL || model;
+    } catch {
+      // Ignora falhas de parseamento do ambiente completo em testes isolados
+    }
+  }
 
   if (!apiKey) {
     return deterministicBaseline;

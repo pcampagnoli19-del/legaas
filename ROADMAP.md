@@ -161,25 +161,25 @@ Nesta fase, os fluxos poderão utilizar configurações simples, sem necessidade
 
 ## 1.9. Prazos e obrigações
 
-- [ ] Cadastro de prazos.
-- [ ] Prazos internos.
-- [ ] Prazos externos.
-- [ ] Prazos contratuais.
-- [ ] Associação a demandas.
-- [ ] Alertas de vencimento.
-- [ ] Identificação de atrasos.
+- [x] Cadastro de prazos.
+- [x] Prazos internos.
+- [x] Prazos externos.
+- [x] Prazos contratuais.
+- [x] Associação a demandas.
+- [x] Alertas de vencimento.
+- [x] Identificação de atrasos.
 - [ ] Calendário operacional básico.
 
 ## 1.10. Documentos
 
-- [ ] Upload de documentos.
-- [ ] Download seguro.
-- [ ] Associação a clientes.
-- [ ] Associação a empresas.
-- [ ] Associação a demandas.
-- [ ] Classificação documental.
-- [ ] Controle de acesso.
-- [ ] Histórico básico.
+- [x] Upload de documentos.
+- [x] Download seguro.
+- [x] Associação a clientes.
+- [x] Associação a empresas.
+- [x] Associação a demandas.
+- [x] Classificação documental.
+- [x] Controle de acesso.
+- [x] Histórico básico.
 
 ## 1.11. Dashboard operacional
 
