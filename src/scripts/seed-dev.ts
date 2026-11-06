@@ -119,7 +119,17 @@ async function ensureMigrationsApplied(sqlClient: postgres.Sql): Promise<void> {
   `;
   const fnExists = Boolean(fnRows[0]?.fn_exists);
 
-  if (exists && fnExists) {
+  const colRows = await sqlClient<Array<{ col_exists: boolean }>>`
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'documents'
+        AND column_name = 'expiration_date'
+    ) AS col_exists
+  `;
+  const colExists = Boolean(colRows[0]?.col_exists);
+
+  if (exists && fnExists && colExists) {
     return;
   }
 
@@ -131,6 +141,12 @@ async function ensureMigrationsApplied(sqlClient: postgres.Sql): Promise<void> {
 
   for (const file of files) {
     if (exists && (file.startsWith('0000_') || file.startsWith('0001_'))) {
+      continue;
+    }
+    if (fnExists && file.startsWith('0002_')) {
+      continue;
+    }
+    if (colExists && file.startsWith('0003_')) {
       continue;
     }
     const content = fs.readFileSync(path.join(drizzleDir, file), 'utf8');

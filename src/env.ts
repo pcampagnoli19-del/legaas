@@ -45,6 +45,8 @@ export const serverEnvSchema = clientEnvSchema.extend({
   SMTP_HOST: z.string().min(1).default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
   SMTP_FROM: z.string().email().default('no-reply@legaas.local'),
+  GROQ_API_KEY: z.string().optional(),
+  GROQ_MODEL: z.string().min(1).default('llama-3.3-70b-versatile'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 

@@ -335,6 +335,19 @@ export const documents = pgTable(
     clientId: uuid('client_id'),
     companyId: uuid('company_id'),
     demandId: uuid('demand_id'),
+    certificateType: text('certificate_type'),
+    issuingAuthority: text('issuing_authority'),
+    issueDate: date('issue_date'),
+    expirationDate: date('expiration_date'),
+    alertDaysBefore: integer('alert_days_before')
+      .array()
+      .notNull()
+      .default(sql`ARRAY[30, 15, 7]::integer[]`),
+    controlCode: text('control_code'),
+    extractedMetadata: jsonb('extracted_metadata')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     uploadedByMembershipId: uuid('uploaded_by_membership_id').notNull(),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -345,6 +358,7 @@ export const documents = pgTable(
     uniqueIndex('documents_storage_key_unique').on(table.storageKey),
     index('documents_org_demand_idx').on(table.organizationId, table.demandId),
     index('documents_org_client_idx').on(table.organizationId, table.clientId),
+    index('documents_org_expiration_idx').on(table.organizationId, table.expirationDate),
     check(
       'documents_at_least_one_target_check',
       sql`${table.clientId} IS NOT NULL OR ${table.companyId} IS NOT NULL OR ${table.demandId} IS NOT NULL`,
