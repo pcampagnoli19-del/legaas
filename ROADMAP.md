@@ -149,13 +149,13 @@ Este será um dos módulos centrais da plataforma.
 
 ## 1.8. Workflows básicos
 
-- [ ] Cadastro de fluxos.
-- [ ] Definição de etapas.
-- [ ] Associação de workflows a serviços.
-- [ ] Transição entre etapas.
-- [ ] Responsáveis por etapa.
-- [ ] Histórico de movimentação.
-- [ ] Validação de transições.
+- [x] Cadastro de fluxos.
+- [x] Definição de etapas.
+- [x] Associação de workflows a serviços.
+- [x] Transição entre etapas.
+- [x] Responsáveis por etapa.
+- [x] Histórico de movimentação.
+- [x] Validação de transições.
 
 Nesta fase, os fluxos poderão utilizar configurações simples, sem necessidade de um construtor visual avançado.
 
