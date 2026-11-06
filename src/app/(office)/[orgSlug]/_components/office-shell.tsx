@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  FolderKanban,
   Landmark,
   LayoutDashboard,
   LogOut,
@@ -73,6 +74,11 @@ export function OfficeShell({
       label: 'Visão Geral',
       href: `/${orgSlug}`,
       icon: LayoutDashboard,
+    },
+    {
+      label: 'Demandas',
+      href: `/${orgSlug}/demandas`,
+      icon: FolderKanban,
     },
     {
       label: 'Clientes',
@@ -177,7 +183,10 @@ export function OfficeShell({
         <nav className="flex-1 space-y-1 px-2.5 py-3">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              item.href === `/${orgSlug}`
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}

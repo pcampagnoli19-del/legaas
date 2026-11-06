@@ -10,6 +10,13 @@ import { accounts, organizations, users } from '@/server/db/schema';
 import { createClient, listOrganizationClients } from '@/server/modules/clients/service';
 import { createCompany, listOrganizationCompanies } from '@/server/modules/companies/service';
 import {
+  addDemandComment,
+  createDemand,
+  listDemandCatalogMetadata,
+  listOrganizationDemands,
+  transitionDemandStage,
+} from '@/server/modules/demands/service';
+import {
   assignMemberToDepartment,
   createDepartment,
   listOrganizationDepartments,
@@ -371,6 +378,79 @@ async function main() {
         },
         appHandle.db,
       );
+    }
+
+    const allCompanies = await listOrganizationCompanies(adminCtx, {}, appHandle.db);
+    const existingDemands = await listOrganizationDemands(adminCtx, {}, appHandle.db);
+    if (existingDemands.length === 0 && demoClientId && allCompanies.length > 0) {
+      const catalog = await listDemandCatalogMetadata(adminCtx, appHandle.db);
+      const activeStage = catalog.stages.find((s) => s.category === 'active');
+      const waitingStage = catalog.stages.find((s) => s.category === 'waiting');
+
+      const dem1 = await createDemand(
+        adminCtx,
+        {
+          title: 'Alteração Contratual de Consolidação Societária e Ingresso de Sócio',
+          description:
+            'Elaboração da 4ª Alteração e Consolidação do Contrato Social, coleta de assinaturas ICP-Brasil e protocolo perante a JUCESP.',
+          clientId: demoClientId,
+          companyId: allCompanies[0]!.id,
+          departmentId: deptSocietario.id,
+          assigneeMembershipId: analystMember?.membershipId ?? adminCtx.membershipId,
+          priority: 'high',
+          dueDate: '2026-12-15',
+        },
+        appHandle.db,
+      );
+
+      if (activeStage) {
+        await transitionDemandStage(
+          adminCtx,
+          {
+            demandId: dem1.id,
+            toStageId: activeStage.id,
+            note: 'Minuta societária elaborada e validada com a diretoria jurídica do cliente.',
+          },
+          appHandle.db,
+        );
+      }
+
+      await addDemandComment(
+        adminCtx,
+        {
+          demandId: dem1.id,
+          body: 'Certidões negativas federais e estaduais conferidas. Aguardando assinatura digital dos representantes.',
+        },
+        appHandle.db,
+      );
+
+      const dem2 = await createDemand(
+        adminCtx,
+        {
+          title: 'Renovação de Alvará de Funcionamento e AVCB da Filial Logística',
+          description:
+            'Vistoria técnica prévia, renovação de AVCB junto ao Corpo de Bombeiros e atualização de licença municipal de operação em Campinas/SP.',
+          clientId: demoClientId,
+          companyId: (allCompanies[1] ?? allCompanies[0])!.id,
+          departmentId: deptLicencas.id,
+          assigneeMembershipId: analystMember?.membershipId ?? adminCtx.membershipId,
+          priority: 'urgent',
+          dueDate: '2026-11-30',
+        },
+        appHandle.db,
+      );
+
+      if (waitingStage) {
+        await transitionDemandStage(
+          adminCtx,
+          {
+            demandId: dem2.id,
+            toStageId: waitingStage.id,
+            note: 'Protocolado pedido de vistoria; aguardando emissão de parecer técnico do órgão.',
+          },
+          appHandle.db,
+        );
+      }
     }
 
     const pendingInvite = await inviteOrganizationMember(
