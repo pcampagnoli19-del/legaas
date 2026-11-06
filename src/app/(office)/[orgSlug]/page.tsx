@@ -97,7 +97,7 @@ export default async function OfficeOverviewPage({ params }: OfficeOverviewPageP
       <EmptyState
         icon={FolderKanban}
         title="Nenhuma demanda cadastrada nesta organização"
-        description="Autenticação (1.1), Usuários e Permissões (1.2) e Departamentos (1.3) estão ativos. Os módulos de Clientes (1.4), Empresas (1.5) e Demandas (1.6) serão habilitados nas próximas subetapas da Fase 1."
+        description="Autenticação (1.1), Usuários e Permissões (1.2), Departamentos (1.3), Clientes (1.4) e Empresas (1.5) estão ativos. O módulo de Demandas (1.6) será habilitado na próxima subetapa da Fase 1."
       />
 
       <section aria-labelledby="recent-demands-heading" className="space-y-2.5">

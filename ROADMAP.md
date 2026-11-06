@@ -85,24 +85,24 @@ Objetivo: entregar uma primeira versão utilizável do Legaas Office, capaz de a
 
 ## 1.4. Clientes
 
-- [ ] Cadastro de clientes.
-- [ ] Edição de clientes.
-- [ ] Cadastro de contatos.
-- [ ] Dados cadastrais.
-- [ ] Histórico de relacionamento.
-- [ ] Pesquisa e filtros.
-- [ ] Ativação e desativação.
+- [x] Cadastro de clientes.
+- [x] Edição de clientes.
+- [x] Cadastro de contatos.
+- [x] Dados cadastrais.
+- [x] Histórico de relacionamento.
+- [x] Pesquisa e filtros.
+- [x] Ativação e desativação.
 
 ## 1.5. Empresas
 
-- [ ] Cadastro de pessoas jurídicas.
-- [ ] CNPJ.
-- [ ] Razão social e nome fantasia.
-- [ ] Endereço.
-- [ ] Dados cadastrais complementares.
-- [ ] Associação entre cliente e empresa.
-- [ ] Suporte a grupos empresariais.
-- [ ] Pesquisa e filtros.
+- [x] Cadastro de pessoas jurídicas.
+- [x] CNPJ.
+- [x] Razão social e nome fantasia.
+- [x] Endereço.
+- [x] Dados cadastrais complementares.
+- [x] Associação entre cliente e empresa.
+- [x] Suporte a grupos empresariais.
+- [x] Pesquisa e filtros.
 
 ## 1.6. Demandas
 
