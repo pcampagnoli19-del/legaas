@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, LogIn, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { LegaasLogo } from '@/components/shared/legaas-logo';
 import { Badge } from '@/components/ui/badge';
@@ -7,10 +7,19 @@ export default function HomePage() {
   const isDevOrTest = process.env.NODE_ENV !== 'production';
 
   return (
-    <div className="flex min-h-screen flex-col justify-between bg-brand-navy text-white">
+    <div className="bg-brand-navy flex min-h-screen flex-col justify-between text-white">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
         <LegaasLogo variant="dark-bg" showTagline />
-        <Badge variant="emerald">Fase 0 · Fundação</Badge>
+        <div className="flex items-center gap-3">
+          <Badge variant="emerald">MVP · Fase 1.1</Badge>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/10"
+          >
+            <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Entrar</span>
+          </Link>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-6 py-16">
@@ -26,17 +35,24 @@ export default function HomePage() {
             demandas, workflows configuráveis, prazos e documentos.
           </p>
 
-          {isDevOrTest ? (
-            <div className="pt-3">
+          <div className="flex flex-wrap items-center gap-3 pt-3">
+            <Link
+              href="/login"
+              className="bg-brand-emerald hover:bg-brand-emerald-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-xs font-semibold text-slate-950 transition-colors hover:text-white"
+            >
+              <span>Entrar no Legaas Office</span>
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+
+            {isDevOrTest ? (
               <Link
                 href="/demonstracao-dev"
-                className="bg-brand-emerald hover:bg-brand-emerald-dark inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-xs font-semibold text-slate-950 transition-colors hover:text-white"
+                className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-medium text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
               >
-                <span>Acessar Shell do Legaas Office (Ambiente Dev)</span>
-                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>Preview do Shell (Dev)</span>
               </Link>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </main>
 

@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
+    "org:provision": "node --env-file-if-exists=.env src/scripts/provision-org.ts",
     "test": "vitest run",
     "e2e": "playwright test"
   },
