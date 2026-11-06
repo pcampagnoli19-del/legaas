@@ -26,6 +26,12 @@ import {
   listOrganizationMembers,
 } from '@/server/modules/members/service';
 import { acceptInvitation, provisionOrganization } from '@/server/modules/organizations/service';
+import {
+  createServiceType,
+  createWorkflow,
+  listOrganizationWorkflowsCatalog,
+  setWorkflowTransitionRules,
+} from '@/server/modules/workflows/service';
 
 const SEED_ORG_SLUG = 'legaas-demo';
 const SEED_ORG_NAME = 'Legaas Demonstração Operacional';
@@ -380,6 +386,82 @@ async function main() {
       );
     }
 
+    const wfCatalog = await listOrganizationWorkflowsCatalog(adminCtx, appHandle.db);
+    let licensingWfSummary = wfCatalog.workflows.find(
+      (w) => w.name === 'Esteira de Licenciamento e Alvarás',
+    );
+    if (!licensingWfSummary) {
+      const createdLicensingWf = await createWorkflow(
+        adminCtx,
+        {
+          name: 'Esteira de Licenciamento e Alvarás',
+          isDefault: false,
+          stages: [
+            { name: 'Diagnóstico Documental e Viabilidade', category: 'backlog' },
+            { name: 'Vistoria Técnica e Adequação', category: 'active' },
+            { name: 'Protocolado no Órgão (Aguardando Parecer)', category: 'waiting' },
+            { name: 'Alvará / Licença Emitida', category: 'done' },
+            { name: 'Indeferido / Arquivado', category: 'cancelled' },
+          ],
+        },
+        appHandle.db,
+      );
+      const updatedCatalog = await listOrganizationWorkflowsCatalog(adminCtx, appHandle.db);
+      licensingWfSummary = updatedCatalog.workflows.find((w) => w.id === createdLicensingWf.id);
+    }
+
+    if (
+      licensingWfSummary &&
+      licensingWfSummary.stages.length >= 4 &&
+      licensingWfSummary.transitions.length === 0
+    ) {
+      const s1 = licensingWfSummary.stages[0]!;
+      const s2 = licensingWfSummary.stages[1]!;
+      const s3 = licensingWfSummary.stages[2]!;
+      const s4 = licensingWfSummary.stages[3]!;
+      const s5 = licensingWfSummary.stages[4];
+
+      const rules = [
+        { fromStageId: s1.id, toStageId: s2.id },
+        { fromStageId: s2.id, toStageId: s1.id },
+        { fromStageId: s2.id, toStageId: s3.id },
+        { fromStageId: s3.id, toStageId: s2.id },
+        { fromStageId: s3.id, toStageId: s4.id },
+      ];
+      if (s5) {
+        rules.push(
+          { fromStageId: s1.id, toStageId: s5.id },
+          { fromStageId: s2.id, toStageId: s5.id },
+          { fromStageId: s3.id, toStageId: s5.id },
+        );
+      }
+
+      await setWorkflowTransitionRules(
+        adminCtx,
+        {
+          workflowId: licensingWfSummary.id,
+          transitions: rules,
+        },
+        appHandle.db,
+      );
+    }
+
+    const hasLicensingSvc = wfCatalog.serviceTypes.some(
+      (s) => s.name === 'Renovação de AVCB e Alvará de Funcionamento',
+    );
+    if (!hasLicensingSvc && licensingWfSummary) {
+      await createServiceType(
+        adminCtx,
+        {
+          newCategoryName: 'Alvarás e Licenciamento',
+          name: 'Renovação de AVCB e Alvará de Funcionamento',
+          defaultDepartmentId: deptLicencas.id,
+          defaultWorkflowId: licensingWfSummary.id,
+        },
+        appHandle.db,
+      );
+    }
+
     const allCompanies = await listOrganizationCompanies(adminCtx, {}, appHandle.db);
     const existingDemands = await listOrganizationDemands(adminCtx, {}, appHandle.db);
     if (existingDemands.length === 0 && demoClientId && allCompanies.length > 0) {
@@ -453,17 +535,22 @@ async function main() {
       }
     }
 
-    const pendingInvite = await inviteOrganizationMember(
-      adminCtx,
-      {
-        email: PENDING_INVITE_EMAIL,
-        role: 'coordinator',
-      },
-      appHandle.db,
-    );
-
+    const finalDir = await listOrganizationMembers(adminCtx, appHandle.db);
+    const pendingAlreadyMember = finalDir.members.some((m) => m.email === PENDING_INVITE_EMAIL);
     const baseUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
-    const pendingInviteUrl = `${baseUrl}/convite/${pendingInvite.rawInviteToken}`;
+    let pendingInviteUrl = `${baseUrl}/${SEED_ORG_SLUG}/usuarios`;
+
+    if (!pendingAlreadyMember) {
+      const pendingInvite = await inviteOrganizationMember(
+        adminCtx,
+        {
+          email: PENDING_INVITE_EMAIL,
+          role: 'coordinator',
+        },
+        appHandle.db,
+      );
+      pendingInviteUrl = `${baseUrl}/convite/${pendingInvite.rawInviteToken}`;
+    }
 
     console.log('\n============================================================');
     console.log('SEED DE DESENVOLVIMENTO CONCLUÍDO COM SUCESSO');
@@ -482,7 +569,7 @@ async function main() {
     console.log('------------------------------------------------------------');
     console.log('3) Link de Convite Pendente Ativo (para testar /convite/[token]):');
     console.log(`   E-mail convidado : ${PENDING_INVITE_EMAIL} (papel: coordinator)`);
-    console.log(`   Link de aceite   : ${pendingInviteUrl}`);
+    console.log(`   Link / Status    : ${pendingInviteUrl}`);
     console.log('============================================================\n');
   } finally {
     await appHandle.close();

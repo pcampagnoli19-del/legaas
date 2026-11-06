@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building2,
   FolderKanban,
+  GitBranch,
   Landmark,
   LayoutDashboard,
   LogOut,
@@ -89,6 +90,11 @@ export function OfficeShell({
       label: 'Empresas',
       href: `/${orgSlug}/empresas`,
       icon: Landmark,
+    },
+    {
+      label: 'Workflows e Esteiras',
+      href: `/${orgSlug}/configuracoes/workflows`,
+      icon: GitBranch,
     },
     ...(isOrgAdmin
       ? [

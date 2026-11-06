@@ -74,6 +74,7 @@ export default async function OfficeDemandsPage({ params, searchParams }: Demand
           departments={[]}
           members={[]}
           serviceTypes={[]}
+          workflows={[]}
           stages={[]}
           initialFilters={{
             search: query.search ?? '',
@@ -178,6 +179,7 @@ export default async function OfficeDemandsPage({ params, searchParams }: Demand
             role: m.role,
           }))}
         serviceTypes={catalogMetadata.serviceTypes}
+        workflows={catalogMetadata.workflows}
         stages={catalogMetadata.stages}
         initialFilters={{
           search: query.search ?? '',
