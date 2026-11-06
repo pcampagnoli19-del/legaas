@@ -248,6 +248,30 @@ Cada registro deverá conter:
 
 **Justificativa:** criar uma direção comum para o desenvolvimento do produto e evitar decisões contraditórias ao longo das implementações.
 
+### Aprovação da Arquitetura, Stack, Modelo Relacional e Fundação (Fase 0)
+
+**Data:** 06/11/2026.
+
+**Decisão:**
+1. **Stack oficial (A1):** Next.js 16 (App Router) + TypeScript 6 (strict) + PostgreSQL 17 (com Row-Level Security forçado) + Drizzle ORM + Better Auth + Zod + Tailwind CSS v4 / shadcn + Storage S3 privado + Vitest / Playwright.
+2. **Modelo Cliente × Empresa × Demanda (A2):** relação 1:N (`companies.client_id NOT NULL`), suporte a grupos empresariais via `parent_company_id` na mesma organização e integridade garantida no banco por FK tripla `(organization_id, client_id, company_id)` em `demands`.
+3. **Contexto de Organização na URL (A3):** rotas do Legaas Office estruturadas sob `/[orgSlug]/...` com validação estrita no servidor e resolução transacional via `withTenant()` (`SET LOCAL ROLE legaas_app` + `set_config('app.current_org_id', orgId, true)`).
+4. **Criação de Organizações no MVP (A4):** regime fechado (criadas por superadmin/CLI/seed); usuários ingressam exclusivamente por convite auditado com token hash de uso único (`invitations`).
+5. **Autorização no MVP (A5):** RBAC com escopo por departamento (`departments`, `department_members`).
+6. **Status da Demanda (A6):** derivado diretamente da categoria da etapa atual do workflow (`backlog`, `active`, `waiting`, `done`, `cancelled`), evitando dupla máquina de estados.
+7. **Prazos (A7):** `demands.due_date` representa o prazo geral de conclusão; a entidade `deadlines` representa obrigações específicas vinculadas à demanda ou tarefa.
+8. **Infraestrutura e Região (A8):** container Docker em PaaS/Cloud com PostgreSQL gerenciado na região Brasil (`sa-east-1`).
+9. **Idioma e Rótulos (A9) e Público do Piloto (A14):** apenas `pt-BR` com rótulos fixos no MVP, priorizando o Grupo A (prestadores de serviços jurídicos, societários e paralegais).
+10. **Identidade Visual Oficial (A10):** estilo corporativo sóbrio apenas em modo claro no MVP, utilizando a paleta oficial do logotipo (`#03193A` Navy e `#14C38E` Esmeralda), escala neutra Slate/Zinc e tipografia Geist Sans / Geist Mono.
+
+**Contexto:** conclusão da análise técnica inicial (Fase 0.1) e implementação da fundação do projeto (Fase 0).
+
+**Justificativa:** garantir isolamento multi-tenant verificável por testes automatizados no banco de dados (meta-teste de RLS no CI) e evitar retrabalho estrutural na Fase 1.
+
+**Impactos:** todas as 22 tabelas multi-tenant exigem `ENABLE + FORCE ROW LEVEL SECURITY`, política para `legaas_app` e FKs compostas com `organization_id`.
+
+**Arquivos ou módulos afetados:** `src/server/db/*`, `drizzle/*`, `tests/tenancy/rls-coverage.test.ts`, `src/app/(office)/[orgSlug]/*`, `docs/architecture.md`.
+
 ---
 
 ## 15. Regra para alterações futuras

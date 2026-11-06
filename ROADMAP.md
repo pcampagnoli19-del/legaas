@@ -12,45 +12,45 @@ O roadmap é um documento vivo e poderá ser atualizado conforme a evolução do
 
 # FASE 0 — FUNDAÇÃO DO PROJETO
 
-\<text>Objetivo: estabelecer a arquitetura e a infraestrutura necessárias para desenvolver o Legaas de maneira organizada e escalável.\</text>
+Objetivo: estabelecer a arquitetura e a infraestrutura necessárias para desenvolver o Legaas de maneira organizada e escalável.
 
 ### 0.1. Análise inicial
 
-- [ ] Analisar a estrutura existente do repositório.
-- [ ] Verificar tecnologias e dependências já utilizadas.
-- [ ] Identificar arquivos, configurações e implementações existentes.
-- [ ] Propor arquitetura inicial.
-- [ ] Definir estrutura de diretórios.
-- [ ] Identificar riscos e dependências técnicas.
+- [x] Analisar a estrutura existente do repositório.
+- [x] Verificar tecnologias e dependências já utilizadas.
+- [x] Identificar arquivos, configurações e implementações existentes.
+- [x] Propor arquitetura inicial.
+- [x] Definir estrutura de diretórios.
+- [x] Identificar riscos e dependências técnicas.
 
 ### 0.2. Infraestrutura
 
-- [ ] Configuração do ambiente de desenvolvimento.
-- [ ] Configuração das variáveis de ambiente.
-- [ ] Configuração do banco de dados.
-- [ ] Configuração do ORM.
-- [ ] Estrutura inicial de migrations.
-- [ ] Configuração de validações.
-- [ ] Configuração de tratamento de erros.
-- [ ] Configuração de testes.
-- [ ] Configuração de lint e formatação.
+- [x] Configuração do ambiente de desenvolvimento.
+- [x] Configuração das variáveis de ambiente.
+- [x] Configuração do banco de dados.
+- [x] Configuração do ORM.
+- [x] Estrutura inicial de migrations.
+- [x] Configuração de validações.
+- [x] Configuração de tratamento de erros.
+- [x] Configuração de testes.
+- [x] Configuração de lint e formatação.
 
 ### 0.3. Identidade e interface
 
-- [ ] Definir identidade visual inicial.
-- [ ] Criar sistema de cores e tipografia.
-- [ ] Criar componentes básicos.
-- [ ] Desenvolver estrutura de navegação.
-- [ ] Criar layout principal do Legaas Office.
-- [ ] Definir comportamento responsivo.
+- [x] Definir identidade visual inicial.
+- [x] Criar sistema de cores e tipografia.
+- [x] Criar componentes básicos.
+- [x] Desenvolver estrutura de navegação.
+- [x] Criar layout principal do Legaas Office.
+- [x] Definir comportamento responsivo.
 
-**Critério de conclusão:** projeto executável, arquitetura documentada, banco configurado e estrutura visual inicial funcional.
+**Critério de conclusão:** projeto executável, arquitetura documentada, banco configurado e estrutura visual inicial funcional. (Concluído e validado em 06/11/2026)
 
 ---
 
 # FASE 1 — MVP OPERACIONAL
 
-\<badge color="success">Prioridade máxima\</badge>
+**Prioridade máxima**
 
 Objetivo: entregar uma primeira versão utilizável do Legaas Office, capaz de administrar uma operação real.
 
@@ -400,8 +400,8 @@ O roadmap deverá ser atualizado continuamente.
 Cada item deverá refletir seu estado real:
 
 - [ ] Não iniciado.
-- [\~] Em desenvolvimento.
-- [ ] Implementado e validado.
+- [~] Em desenvolvimento.
+- [x] Implementado e validado.
 
 O Claude deverá atualizar este documento ao concluir etapas relevantes, sem antecipar entregas ou marcar funcionalidades não testadas como concluídas.
 

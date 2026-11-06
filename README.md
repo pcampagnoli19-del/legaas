@@ -221,6 +221,14 @@ O Legaas deve parecer um produto SaaS corporativo maduro, e não apenas um prot�
 
 ## 10. Roadmap de desenvolvimento
 
+O planejamento detalhado e o acompanhamento de execução encontram-se em `ROADMAP.md`.
+
+### Fase 0 — Fundação do projeto
+
+- Arquitetura multi-tenant e infraestrutura base.
+- Modelagem relacional com Row-Level Security (RLS) e FKs compostas/triplas.
+- Identidade visual oficial, design system base e layout principal do Legaas Office.
+
 ### Fase 1 — MVP
 
 Construção da estrutura central:
@@ -235,13 +243,14 @@ Construção da estrutura central:
 - Gestão básica de tarefas.
 - Workflows básicos.
 - Controle de prazos.
+- Gestão documental interna (Office).
 - Dashboard operacional.
 
 ### Fase 2 — Experiência do cliente
 
 - Legaas Client.
 - Abertura de solicitações.
-- Upload de documentos.
+- Upload e compartilhamento externo de documentos.
 - Acompanhamento de demandas.
 - Aprovações.
 - Notificações.
