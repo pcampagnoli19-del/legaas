@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  FileCheck2,
   FolderKanban,
   GitBranch,
   Landmark,
@@ -80,6 +81,11 @@ export function OfficeShell({
       label: 'Demandas',
       href: `/${orgSlug}/demandas`,
       icon: FolderKanban,
+    },
+    {
+      label: 'Certidões e Validades',
+      href: `/${orgSlug}/certidoes`,
+      icon: FileCheck2,
     },
     {
       label: 'Clientes',

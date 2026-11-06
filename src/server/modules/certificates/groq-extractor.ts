@@ -149,10 +149,7 @@ export function extractTextFromPdfBuffer(buffer: Buffer): string {
     collectedChunks.push(utf8Printable);
   }
 
-  const combined = collectedChunks
-    .join('\n')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const combined = collectedChunks.join('\n').replace(/\s+/g, ' ').trim();
 
   return combined.slice(0, 18_000);
 }
@@ -195,9 +192,7 @@ function parseBrazilianDateToIso(rawDate: string): string | null {
   }
 
   // Formato por extenso: "15 de dezembro de 2026"
-  const extMatch = trimmed
-    .toLowerCase()
-    .match(/(\d{1,2})\s+de\s+([a-zç]+)\s+de\s+(\d{4})/);
+  const extMatch = trimmed.toLowerCase().match(/(\d{1,2})\s+de\s+([a-zç]+)\s+de\s+(\d{4})/);
   if (extMatch) {
     const day = extMatch[1]!.padStart(2, '0');
     const monthName = extMatch[2]!;
@@ -225,7 +220,10 @@ export function extractCertificateMetadataDeterministic(
 
   let certificateType: CertificateTypeCode = 'OUTRA_CERTIDAO';
   let issuingAuthority: string | null = null;
-  let suggestedTitle = originalFileName.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').trim();
+  let suggestedTitle = originalFileName
+    .replace(/\.pdf$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
 
   if (
     lower.includes('fgts') ||
@@ -380,7 +378,9 @@ export function extractCertificateMetadataDeterministic(
 
   // Caso não tenha rótulo explícito mas haja datas DD/MM/YYYY no documento, ordena cronologicamente
   if (!expirationDate) {
-    const allDates = Array.from(combinedSource.matchAll(/\b(\d{2}[/.-]\d{2}[/.-]\d{4}|\d{4}-\d{2}-\d{2})\b/g))
+    const allDates = Array.from(
+      combinedSource.matchAll(/\b(\d{2}[/.-]\d{2}[/.-]\d{4}|\d{4}-\d{2}-\d{2})\b/g),
+    )
       .map((m) => parseBrazilianDateToIso(m[1]!))
       .filter((d): d is string => Boolean(d))
       .sort();

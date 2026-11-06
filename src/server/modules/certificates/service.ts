@@ -2,7 +2,6 @@ import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { assertPermission, getOperationalScopeFilter } from '@/server/authz/permissions';
 import type { OfficeTenantContext } from '@/server/context/tenant-context';
-import { getAppDb } from '@/server/db/client';
 import {
   activityLog,
   clients,
@@ -273,14 +272,10 @@ export async function registerCertificateDocument(
     );
   }
 
-  const db = database ?? (await getAppDb());
-
   return withTenant(
-    db,
     {
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      membershipId: ctx.membershipId,
+      actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
       let resolvedClientId = input.clientId ?? null;
@@ -498,6 +493,7 @@ export async function registerCertificateDocument(
         linkedDeadlineId,
       };
     },
+    database,
   );
 }
 
@@ -529,14 +525,10 @@ export async function updateCertificateDocument(
     );
   }
 
-  const db = database ?? (await getAppDb());
-
   return withTenant(
-    db,
     {
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      membershipId: ctx.membershipId,
+      actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
       const [existing] = await tx
@@ -572,16 +564,12 @@ export async function updateCertificateDocument(
           expirationDate:
             input.expirationDate !== undefined ? input.expirationDate : existing.expirationDate,
           alertDaysBefore: alertDays,
-          controlCode:
-            input.controlCode !== undefined ? input.controlCode : existing.controlCode,
+          controlCode: input.controlCode !== undefined ? input.controlCode : existing.controlCode,
           visibility: input.visibility ?? existing.visibility,
           updatedAt: new Date(),
         })
         .where(
-          and(
-            eq(documents.organizationId, ctx.organizationId),
-            eq(documents.id, input.documentId),
-          ),
+          and(eq(documents.organizationId, ctx.organizationId), eq(documents.id, input.documentId)),
         );
 
       const finalExpiration =
@@ -611,6 +599,7 @@ export async function updateCertificateDocument(
         validityStatus: validity.validityStatus,
       };
     },
+    database,
   );
 }
 
@@ -624,14 +613,10 @@ export async function archiveCertificateDocument(
 ): Promise<{ id: string }> {
   assertPermission(ctx, 'document.write');
 
-  const db = database ?? (await getAppDb());
-
   return withTenant(
-    db,
     {
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      membershipId: ctx.membershipId,
+      actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
       const [existing] = await tx
@@ -660,9 +645,7 @@ export async function archiveCertificateDocument(
           archivedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(
-          and(eq(documents.organizationId, ctx.organizationId), eq(documents.id, documentId)),
-        );
+        .where(and(eq(documents.organizationId, ctx.organizationId), eq(documents.id, documentId)));
 
       await tx.insert(activityLog).values({
         organizationId: ctx.organizationId,
@@ -678,6 +661,7 @@ export async function archiveCertificateDocument(
 
       return { id: existing.id };
     },
+    database,
   );
 }
 
@@ -706,26 +690,19 @@ export async function listOrganizationCertificates(
     assertPermission(ctx, 'document.read');
   }
 
-  const db = database ?? (await getAppDb());
-
   return withTenant(
-    db,
     {
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      membershipId: ctx.membershipId,
+      actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
-      const [docRows, catRows, clientRows, companyRows, demandRows, memberRows] =
-        await Promise.all([
+      const [docRows, catRows, clientRows, companyRows, demandRows, memberRows] = await Promise.all(
+        [
           tx
             .select()
             .from(documents)
             .where(
-              and(
-                eq(documents.organizationId, ctx.organizationId),
-                isNull(documents.archivedAt),
-              ),
+              and(eq(documents.organizationId, ctx.organizationId), isNull(documents.archivedAt)),
             )
             .orderBy(asc(documents.expirationDate), desc(documents.createdAt)),
           tx
@@ -752,7 +729,8 @@ export async function listOrganizationCertificates(
             .from(memberships)
             .innerJoin(users, eq(users.id, memberships.userId))
             .where(eq(memberships.organizationId, ctx.organizationId)),
-        ]);
+        ],
+      );
 
       const catMap = new Map(catRows.map((c) => [c.id, c.name]));
       const clientMap = new Map(clientRows.map((c) => [c.id, c.name]));
@@ -779,7 +757,8 @@ export async function listOrganizationCertificates(
         }
 
         const certType: CertificateTypeCode =
-          row.certificateType && CERTIFICATE_TYPES.includes(row.certificateType as CertificateTypeCode)
+          row.certificateType &&
+          CERTIFICATE_TYPES.includes(row.certificateType as CertificateTypeCode)
             ? (row.certificateType as CertificateTypeCode)
             : 'OUTRA_CERTIDAO';
 
@@ -855,6 +834,7 @@ export async function listOrganizationCertificates(
 
       return results;
     },
+    database,
   );
 }
 
@@ -871,14 +851,10 @@ export async function getOrganizationExpirationAlerts(
 ): Promise<ExpirationAlertsDashboard> {
   const certs = await listOrganizationCertificates(ctx, {}, database, referenceDate);
 
-  const db = database ?? (await getAppDb());
-
   const pendingDeadlines = await withTenant(
-    db,
     {
       organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      membershipId: ctx.membershipId,
+      actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
       return tx
@@ -910,6 +886,7 @@ export async function getOrganizationExpirationAlerts(
         )
         .orderBy(asc(deadlines.dueDate));
     },
+    database,
   );
 
   let totalTrackedCertificates = 0;

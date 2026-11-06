@@ -3,9 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentSessionFromCookies } from '@/server/auth/session';
 import { assertPermission } from '@/server/authz/permissions';
-import { type ActionResult, runAction } from '@/server/context/action';
+import { executeSafeAction } from '@/server/context/action';
 import { resolveOfficeTenantContext } from '@/server/context/tenant-context';
-import { UnauthorizedError, ValidationError } from '@/server/errors/app-error';
+import { type ActionResult, UnauthorizedError, ValidationError } from '@/server/errors/app-error';
 import { listOrganizationCompanies } from '@/server/modules/companies/service';
 import {
   analyzeCertificatePdfWithGroq,
@@ -49,7 +49,7 @@ export interface AnalyzeCertificatePdfActionResult extends ExtractedCertificateD
 export async function analyzeCertificatePdfAction(
   formData: FormData,
 ): Promise<ActionResult<AnalyzeCertificatePdfActionResult>> {
-  return runAction('certificates.analyzePdf', async () => {
+  return executeSafeAction('certificates.analyzePdf', async () => {
     const orgSlug = String(formData.get('orgSlug') ?? '').trim();
     if (!orgSlug) {
       throw new ValidationError('Organização não informada.');
@@ -62,7 +62,7 @@ export async function analyzeCertificatePdfAction(
     const pastedText = String(formData.get('pastedText') ?? '').trim();
 
     let buffer: Buffer;
-    let originalFileName = 'certidao.pdf';
+    let originalFileName: string;
 
     if (fileEntry && typeof fileEntry === 'object' && 'arrayBuffer' in fileEntry) {
       const arrayBuf = await (fileEntry as File).arrayBuffer();
@@ -115,9 +115,7 @@ export async function analyzeCertificatePdfAction(
  * Server Action que realiza o upload completo e registro da Certidão (com metadados revisados
  * pelo usuário ou extraídos pela IA Groq) e revalida o Painel e a tela de Certidões.
  */
-export async function uploadAndRegisterCertificateAction(
-  formData: FormData,
-): Promise<
+export async function uploadAndRegisterCertificateAction(formData: FormData): Promise<
   ActionResult<{
     id: string;
     title: string;
@@ -128,7 +126,7 @@ export async function uploadAndRegisterCertificateAction(
     linkedDeadlineId: string | null;
   }>
 > {
-  return runAction('certificates.uploadAndRegister', async () => {
+  return executeSafeAction('certificates.uploadAndRegister', async () => {
     const orgSlug = String(formData.get('orgSlug') ?? '').trim();
     if (!orgSlug) {
       throw new ValidationError('Organização não informada.');
@@ -228,7 +226,7 @@ export async function updateCertificateAction(input: {
     validityStatus: CertificateValidityStatus;
   }>
 > {
-  return runAction('certificates.update', async () => {
+  return executeSafeAction('certificates.update', async () => {
     const ctx = await requireOfficeContext(input.orgSlug);
     const updated = await updateCertificateDocument(ctx, {
       documentId: input.documentId,
@@ -252,7 +250,7 @@ export async function archiveCertificateAction(input: {
   orgSlug: string;
   documentId: string;
 }): Promise<ActionResult<{ id: string }>> {
-  return runAction('certificates.archive', async () => {
+  return executeSafeAction('certificates.archive', async () => {
     const ctx = await requireOfficeContext(input.orgSlug);
     const archived = await archiveCertificateDocument(ctx, input.documentId);
     revalidatePath(`/${ctx.orgSlug}`);

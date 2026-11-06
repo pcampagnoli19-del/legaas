@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { getCurrentSessionFromCookies } from '@/server/auth/session';
 import { assertPermission } from '@/server/authz/permissions';
 import { resolveOfficeTenantContext } from '@/server/context/tenant-context';
-import { getAppDb } from '@/server/db/client';
 import { documents } from '@/server/db/schema';
 import { withTenant } from '@/server/db/tenant';
 import { readDocumentBuffer } from '@/server/modules/certificates/storage';
@@ -30,13 +29,10 @@ export async function GET(
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
   }
 
-  const db = await getAppDb();
   const doc = await withTenant(
-    db,
     {
       organizationId: tenantCtx.organizationId,
-      userId: tenantCtx.userId,
-      membershipId: tenantCtx.membershipId,
+      actorMembershipId: tenantCtx.membershipId,
     },
     async (tx) => {
       const [row] = await tx
