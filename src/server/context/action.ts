@@ -1,5 +1,16 @@
 import { type z } from 'zod';
-import { type ActionResult, AppError, ValidationError } from '@/server/errors/app-error';
+import { getCurrentSessionFromCookies } from '@/server/auth/session';
+import { assertPermission, type PermissionAction } from '@/server/authz/permissions';
+import {
+  type OfficeTenantContext,
+  resolveOfficeTenantContext,
+} from '@/server/context/tenant-context';
+import {
+  type ActionResult,
+  AppError,
+  UnauthorizedError,
+  ValidationError,
+} from '@/server/errors/app-error';
 import { logger } from '@/server/logger';
 
 function formatZodFieldErrors(error: z.ZodError): Record<string, string[]> {
@@ -69,6 +80,53 @@ export function createValidatedAction<TSchema extends z.ZodTypeAny, TOutput>(par
         );
       }
       return params.handler(parsed.data);
+    });
+  };
+}
+
+/**
+ * Pipeline obrigatório de Server Actions do Legaas Office (§4.2 da proposta técnica):
+ * 1. Valida sessão autenticada via cookie `httpOnly`.
+ * 2. Valida payload de entrada via Zod (incluindo `orgSlug`).
+ * 3. Resolve `OfficeTenantContext` no servidor (`resolveOfficeTenantContext`), rejeitando com 404
+ *    qualquer manipulação de `orgSlug` para outra organização.
+ * 4. Valida a permissão RBAC (`assertPermission`) antes de executar a regra de domínio.
+ */
+export function createOfficeAction<
+  TSchema extends z.ZodObject<{ orgSlug: z.ZodString } & z.ZodRawShape>,
+  TOutput,
+>(params: {
+  name: string;
+  permission?: PermissionAction;
+  schema: TSchema;
+  handler: (args: { ctx: OfficeTenantContext; input: z.infer<TSchema> }) => Promise<TOutput>;
+}): (rawInput: unknown) => Promise<ActionResult<TOutput>> {
+  return async (rawInput: unknown): Promise<ActionResult<TOutput>> => {
+    return executeSafeAction(params.name, async () => {
+      const session = await getCurrentSessionFromCookies();
+      if (!session) {
+        throw new UnauthorizedError();
+      }
+
+      const parsed = params.schema.safeParse(rawInput);
+      if (!parsed.success) {
+        throw new ValidationError(
+          'Verifique os campos destacados e tente novamente.',
+          formatZodFieldErrors(parsed.error),
+        );
+      }
+
+      const input = parsed.data;
+      const ctx = await resolveOfficeTenantContext({
+        userId: session.userId,
+        orgSlug: input.orgSlug,
+      });
+
+      if (params.permission) {
+        assertPermission(ctx, params.permission);
+      }
+
+      return params.handler({ ctx, input });
     });
   };
 }
