@@ -7,6 +7,8 @@ import { hashPassword } from '@/server/auth/crypto';
 import { resolveOfficeTenantContext } from '@/server/context/tenant-context';
 import { resolveRuntimeOrEmbeddedDb } from '@/server/db/client';
 import { accounts, organizations, users } from '@/server/db/schema';
+import { createClient, listOrganizationClients } from '@/server/modules/clients/service';
+import { createCompany, listOrganizationCompanies } from '@/server/modules/companies/service';
 import {
   assignMemberToDepartment,
   createDepartment,
@@ -298,6 +300,74 @@ async function main() {
           departmentId: deptLicencas.id,
           membershipId: analystMember.membershipId,
           departmentRole: 'coordinator',
+        },
+        appHandle.db,
+      );
+    }
+
+    const existingClients = await listOrganizationClients(adminCtx, {}, appHandle.db);
+    let demoClientId = existingClients[0]?.id;
+    if (!demoClientId) {
+      const createdClient = await createClient(
+        adminCtx,
+        {
+          type: 'organization',
+          name: 'Grupo Horizonte Participações',
+          taxId: '12345678000190',
+          email: 'juridico@horizonte.com.br',
+          phone: '(11) 3000-1000',
+          ownerMembershipId: adminCtx.membershipId,
+          notes: 'Grupo empresarial atendido em demandas societárias e licenciamento.',
+          primaryContact: {
+            name: 'Dra. Fernanda Lima',
+            email: 'fernanda@horizonte.com.br',
+            phone: '(11) 98888-1111',
+            position: 'Diretora Jurídica',
+          },
+        },
+        appHandle.db,
+      );
+      demoClientId = createdClient.id;
+    }
+
+    const existingCompanies = await listOrganizationCompanies(adminCtx, {}, appHandle.db);
+    if (existingCompanies.length === 0 && demoClientId) {
+      const holding = await createCompany(
+        adminCtx,
+        {
+          clientId: demoClientId,
+          cnpj: '12345678000190',
+          legalName: 'Horizonte Holding Participações S.A.',
+          tradeName: 'Horizonte Holding',
+          stateRegistration: 'Isento',
+          municipalRegistration: '998877-1',
+          addressStreet: 'Av. Brigadeiro Faria Lima',
+          addressNumber: '3500',
+          addressComplement: '10º Andar',
+          addressDistrict: 'Itaim Bibi',
+          addressCity: 'São Paulo',
+          addressState: 'SP',
+          addressZipCode: '04538132',
+        },
+        appHandle.db,
+      );
+
+      await createCompany(
+        adminCtx,
+        {
+          clientId: demoClientId,
+          parentCompanyId: holding.id,
+          cnpj: '12345678000271',
+          legalName: 'Horizonte Logística Integrada Ltda.',
+          tradeName: 'Horizonte Log',
+          stateRegistration: '110.220.330.114',
+          municipalRegistration: '445566-2',
+          addressStreet: 'Rod. Anhanguera',
+          addressNumber: 'Km 104',
+          addressDistrict: 'Distrito Industrial',
+          addressCity: 'Campinas',
+          addressState: 'SP',
+          addressZipCode: '13065900',
         },
         appHandle.db,
       );

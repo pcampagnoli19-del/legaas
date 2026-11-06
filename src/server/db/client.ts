@@ -7,7 +7,7 @@ import type { AnyPgDatabase } from './tenant';
 
 const globalForDb = globalThis as unknown as {
   sqlClient?: postgres.Sql;
-  db?: AnyPgDatabase;
+  pgJsDb?: AnyPgDatabase;
 };
 
 /**
@@ -15,7 +15,7 @@ const globalForDb = globalThis as unknown as {
  * Utilizado tanto em desenvolvimento quanto em produção.
  */
 export function getDb(): AnyPgDatabase {
-  if (!globalForDb.db) {
+  if (!globalForDb.pgJsDb || !globalForDb.sqlClient) {
     const env = getServerEnv();
     const client = postgres(env.DATABASE_URL, {
       max: env.NODE_ENV === 'production' ? 20 : 10,
@@ -24,10 +24,10 @@ export function getDb(): AnyPgDatabase {
       prepare: false,
     });
     globalForDb.sqlClient = client;
-    globalForDb.db = drizzle(client, { schema }) as unknown as AnyPgDatabase;
+    globalForDb.pgJsDb = drizzle(client, { schema }) as unknown as AnyPgDatabase;
   }
 
-  return globalForDb.db;
+  return globalForDb.pgJsDb;
 }
 
 /**
