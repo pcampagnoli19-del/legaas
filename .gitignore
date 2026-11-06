@@ -36,5 +36,6 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# Dados locais de serviços (docker volumes bind)
+# Dados locais de serviços (docker volumes bind e storage local)
 .docker-data/
+.storage-data/

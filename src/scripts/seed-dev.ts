@@ -7,6 +7,10 @@ import { hashPassword } from '@/server/auth/crypto';
 import { resolveOfficeTenantContext } from '@/server/context/tenant-context';
 import { resolveRuntimeOrEmbeddedDb } from '@/server/db/client';
 import { accounts, organizations, users } from '@/server/db/schema';
+import {
+  listOrganizationCertificates,
+  registerCertificateDocument,
+} from '@/server/modules/certificates/service';
 import { createClient, listOrganizationClients } from '@/server/modules/clients/service';
 import { createCompany, listOrganizationCompanies } from '@/server/modules/companies/service';
 import {
@@ -119,7 +123,17 @@ async function ensureMigrationsApplied(sqlClient: postgres.Sql): Promise<void> {
   `;
   const fnExists = Boolean(fnRows[0]?.fn_exists);
 
-  if (exists && fnExists) {
+  const colRows = await sqlClient<Array<{ col_exists: boolean }>>`
+    SELECT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'documents'
+        AND column_name = 'expiration_date'
+    ) AS col_exists
+  `;
+  const colExists = Boolean(colRows[0]?.col_exists);
+
+  if (exists && fnExists && colExists) {
     return;
   }
 
@@ -131,6 +145,12 @@ async function ensureMigrationsApplied(sqlClient: postgres.Sql): Promise<void> {
 
   for (const file of files) {
     if (exists && (file.startsWith('0000_') || file.startsWith('0001_'))) {
+      continue;
+    }
+    if (fnExists && file.startsWith('0002_')) {
+      continue;
+    }
+    if (colExists && file.startsWith('0003_')) {
       continue;
     }
     const content = fs.readFileSync(path.join(drizzleDir, file), 'utf8');
@@ -533,6 +553,101 @@ async function main() {
           appHandle.db,
         );
       }
+    }
+
+    const finalDemands = await listOrganizationDemands(adminCtx, {}, appHandle.db);
+    const existingCerts = await listOrganizationCertificates(adminCtx, {}, appHandle.db);
+    if (existingCerts.length === 0 && demoClientId && allCompanies.length > 0) {
+      const today = new Date();
+      const toIsoDate = (offsetDays: number) => {
+        const d = new Date(today.getTime() + offsetDays * 24 * 60 * 60 * 1000);
+        return d.toISOString().slice(0, 10);
+      };
+
+      // 1. CRF FGTS crítico (vence em 4 dias) vinculado à Holding e à Demanda 1
+      await registerCertificateDocument(
+        adminCtx,
+        {
+          title: 'Certificado de Regularidade do FGTS — CRF (Horizonte Holding)',
+          certificateType: 'CRF_FGTS',
+          issuingAuthority: 'Caixa Econômica Federal (FGTS)',
+          issueDate: toIsoDate(-25),
+          expirationDate: toIsoDate(4),
+          alertDaysBefore: [30, 15, 7],
+          controlCode: '202610110988776655',
+          visibility: 'shared',
+          clientId: demoClientId,
+          companyId: allCompanies[0]!.id,
+          demandId: finalDemands[0]?.id ?? null,
+          originalName: 'CRF_FGTS_Horizonte_Holding.pdf',
+          mimeType: 'application/pdf',
+          createLinkedDeadline: true,
+          extractedMetadata: {
+            extractionEngine: 'groq-llm',
+            extractionModel: 'llama-3.3-70b-versatile',
+            extractedCnpj: allCompanies[0]!.cnpj,
+            confidence: 'high',
+          },
+        },
+        appHandle.db,
+      );
+
+      // 2. AVCB do Corpo de Bombeiros vencido há 3 dias vinculado à Filial Logística e à Demanda 2
+      await registerCertificateDocument(
+        adminCtx,
+        {
+          title: 'Auto de Vistoria do Corpo de Bombeiros — AVCB (Filial Campinas)',
+          certificateType: 'AVCB_CLCB_BOMBEIROS',
+          issuingAuthority: 'Corpo de Bombeiros da PMESP',
+          issueDate: toIsoDate(-368),
+          expirationDate: toIsoDate(-3),
+          alertDaysBefore: [30, 15, 7],
+          controlCode: 'AVCB-SP-884421',
+          visibility: 'shared',
+          clientId: demoClientId,
+          companyId: (allCompanies[1] ?? allCompanies[0])!.id,
+          demandId: finalDemands[1]?.id ?? null,
+          originalName: 'AVCB_Horizonte_Logistica_Campinas.pdf',
+          mimeType: 'application/pdf',
+          createLinkedDeadline: true,
+          extractedMetadata: {
+            extractionEngine: 'groq-llm',
+            extractionModel: 'llama-3.3-70b-versatile',
+            extractedCnpj: (allCompanies[1] ?? allCompanies[0])!.cnpj,
+            confidence: 'high',
+          },
+        },
+        appHandle.db,
+      );
+
+      // 3. CND Conjunta Federal RFB / PGFN regular (vence em 150 dias)
+      await registerCertificateDocument(
+        adminCtx,
+        {
+          title:
+            'Certidão Conjunta Negativa de Débitos Relativos a Tributos Federais e Dívida Ativa',
+          certificateType: 'CND_RFB_PGFN',
+          issuingAuthority: 'Secretaria da Receita Federal do Brasil / PGFN',
+          issueDate: toIsoDate(-30),
+          expirationDate: toIsoDate(150),
+          alertDaysBefore: [30, 15, 7],
+          controlCode: 'F9A1.B8C2.D7E3.4410',
+          visibility: 'shared',
+          clientId: demoClientId,
+          companyId: allCompanies[0]!.id,
+          demandId: finalDemands[0]?.id ?? null,
+          originalName: 'CND_Federal_RFB_PGFN_Horizonte.pdf',
+          mimeType: 'application/pdf',
+          createLinkedDeadline: true,
+          extractedMetadata: {
+            extractionEngine: 'groq-llm',
+            extractionModel: 'llama-3.3-70b-versatile',
+            extractedCnpj: allCompanies[0]!.cnpj,
+            confidence: 'high',
+          },
+        },
+        appHandle.db,
+      );
     }
 
     const finalDir = await listOrganizationMembers(adminCtx, appHandle.db);
