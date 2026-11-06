@@ -108,33 +108,33 @@ Objetivo: entregar uma primeira versão utilizável do Legaas Office, capaz de a
 
 Este será um dos módulos centrais da plataforma.
 
-- [ ] Cadastro de demandas.
-- [ ] Identificador único.
-- [ ] Título e descrição.
-- [ ] Cliente relacionado.
-- [ ] Empresa relacionada, quando aplicável.
-- [ ] Categoria.
-- [ ] Serviço.
-- [ ] Departamento responsável.
-- [ ] Responsável principal.
-- [ ] Participantes.
-- [ ] Prioridade.
-- [ ] Status.
-- [ ] Data de abertura.
-- [ ] Prazo de conclusão.
-- [ ] Histórico de alterações.
-- [ ] Comentários internos.
+- [x] Cadastro de demandas.
+- [x] Identificador único.
+- [x] Título e descrição.
+- [x] Cliente relacionado.
+- [x] Empresa relacionada, quando aplicável.
+- [x] Categoria.
+- [x] Serviço.
+- [x] Departamento responsável.
+- [x] Responsável principal.
+- [x] Participantes.
+- [x] Prioridade.
+- [x] Status.
+- [x] Data de abertura.
+- [x] Prazo de conclusão.
+- [x] Histórico de alterações.
+- [x] Comentários internos.
 - [ ] Anexos.
-- [ ] Pesquisa avançada.
-- [ ] Filtros combinados.
+- [x] Pesquisa avançada.
+- [x] Filtros combinados.
 
 ### Visualizações
 
-- [ ] Visualização em tabela.
-- [ ] Visualização em lista.
-- [ ] Visualização Kanban.
-- [ ] Visualização detalhada.
-- [ ] Ordenação.
+- [x] Visualização em tabela.
+- [x] Visualização em lista.
+- [x] Visualização Kanban.
+- [x] Visualização detalhada.
+- [x] Ordenação.
 - [ ] Filtros salvos.
 
 ## 1.7. Tarefas e atividades
