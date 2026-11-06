@@ -97,7 +97,7 @@ export default async function OfficeOverviewPage({ params }: OfficeOverviewPageP
       <EmptyState
         icon={FolderKanban}
         title="Nenhuma demanda cadastrada nesta organização"
-        description="Os módulos de Autenticação e Organizações (1.1), Clientes (1.4), Empresas (1.5) e Demandas (1.6) serão habilitados na Fase 1 do Roadmap."
+        description="Autenticação (1.1), Usuários e Permissões (1.2) e Departamentos (1.3) estão ativos. Os módulos de Clientes (1.4), Empresas (1.5) e Demandas (1.6) serão habilitados nas próximas subetapas da Fase 1."
       />
 
       <section aria-labelledby="recent-demands-heading" className="space-y-2.5">

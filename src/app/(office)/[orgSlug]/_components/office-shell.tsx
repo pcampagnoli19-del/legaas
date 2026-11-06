@@ -5,10 +5,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Network,
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
   UserCheck,
+  Users,
   X,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -62,12 +64,28 @@ export function OfficeShell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isOrgAdmin = !user || user.role === 'org_admin';
+
   const navItems: NavItem[] = [
     {
       label: 'Visão Geral',
       href: `/${orgSlug}`,
       icon: LayoutDashboard,
     },
+    ...(isOrgAdmin
+      ? [
+          {
+            label: 'Departamentos',
+            href: `/${orgSlug}/departamentos`,
+            icon: Network,
+          },
+          {
+            label: 'Usuários e Permissões',
+            href: `/${orgSlug}/usuarios`,
+            icon: Users,
+          },
+        ]
+      : []),
   ];
 
   return (
