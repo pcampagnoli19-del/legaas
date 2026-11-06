@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNull, sql } from 'drizzle-orm';
 import { assertPermission } from '@/server/authz/permissions';
 import type { OfficeTenantContext } from '@/server/context/tenant-context';
 import { getDb } from '@/server/db/client';
@@ -133,7 +133,7 @@ export async function createDepartment(
         .where(
           and(
             eq(departments.organizationId, ctx.organizationId),
-            eq(departments.name, trimmedName),
+            sql`lower(${departments.name}) = lower(${trimmedName})`,
           ),
         )
         .limit(1);
@@ -262,6 +262,38 @@ export async function assignMemberToDepartment(
       actorMembershipId: ctx.membershipId,
     },
     async (tx) => {
+      const [deptExists] = await tx
+        .select({ id: departments.id })
+        .from(departments)
+        .where(
+          and(
+            eq(departments.organizationId, ctx.organizationId),
+            eq(departments.id, input.departmentId),
+            isNull(departments.archivedAt),
+          ),
+        )
+        .limit(1);
+
+      if (!deptExists) {
+        throw new NotFoundError('Departamento não encontrado nesta organização.');
+      }
+
+      const [memberExists] = await tx
+        .select({ id: memberships.id })
+        .from(memberships)
+        .where(
+          and(
+            eq(memberships.organizationId, ctx.organizationId),
+            eq(memberships.id, input.membershipId),
+            eq(memberships.kind, 'internal'),
+          ),
+        )
+        .limit(1);
+
+      if (!memberExists) {
+        throw new NotFoundError('Membro não encontrado nesta organização.');
+      }
+
       const [existingAssignment] = await tx
         .select()
         .from(departmentMembers)

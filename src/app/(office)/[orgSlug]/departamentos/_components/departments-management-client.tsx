@@ -94,7 +94,7 @@ export function DepartmentsManagementClient({
       const result = await createDepartmentAction({
         orgSlug,
         name: newName,
-        description: newDescription.trim() || null,
+        description: newDescription.trim() || undefined,
       });
 
       if (!result.ok) {
@@ -126,7 +126,7 @@ export function DepartmentsManagementClient({
         orgSlug,
         departmentId,
         name: editName,
-        description: editDescription.trim() || null,
+        description: editDescription.trim() || undefined,
       });
 
       if (!result.ok) {
@@ -157,7 +157,7 @@ export function DepartmentsManagementClient({
         orgSlug,
         departmentId,
         membershipId,
-        role,
+        departmentRole: role,
       });
 
       if (!result.ok) {
@@ -183,7 +183,7 @@ export function DepartmentsManagementClient({
         orgSlug,
         departmentId,
         membershipId,
-        role: newRole,
+        departmentRole: newRole,
       });
 
       if (!result.ok) {

@@ -67,21 +67,21 @@ Objetivo: entregar uma primeira versão utilizável do Legaas Office, capaz de a
 
 ## 1.2. Usuários e permissões
 
-- [ ] Cadastro de usuários.
-- [ ] Edição e desativação.
-- [ ] Convites de usuários.
-- [ ] Perfis de acesso.
-- [ ] Permissões básicas.
-- [ ] Associação a departamentos.
-- [ ] Controle de acesso no backend.
+- [x] Cadastro de usuários.
+- [x] Edição e desativação.
+- [x] Convites de usuários.
+- [x] Perfis de acesso.
+- [x] Permissões básicas.
+- [x] Associação a departamentos.
+- [x] Controle de acesso no backend.
 
 ## 1.3. Departamentos e equipes
 
-- [ ] Cadastro de departamentos.
-- [ ] Edição de departamentos.
-- [ ] Associação de usuários.
-- [ ] Definição de gestores e coordenadores.
-- [ ] Organização da estrutura interna.
+- [x] Cadastro de departamentos.
+- [x] Edição de departamentos.
+- [x] Associação de usuários.
+- [x] Definição de gestores e coordenadores.
+- [x] Organização da estrutura interna.
 
 ## 1.4. Clientes
 

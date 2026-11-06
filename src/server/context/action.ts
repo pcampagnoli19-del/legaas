@@ -97,8 +97,8 @@ export function createOfficeAction<TInput extends { orgSlug: string }, TOutput>(
   permission?: PermissionAction;
   schema: z.ZodType<TInput>;
   handler: (args: { ctx: OfficeTenantContext; input: TInput }) => Promise<TOutput>;
-}): (rawInput: unknown) => Promise<ActionResult<TOutput>> {
-  return async (rawInput: unknown): Promise<ActionResult<TOutput>> => {
+}): (rawInput: TInput) => Promise<ActionResult<TOutput>> {
+  return async (rawInput: TInput): Promise<ActionResult<TOutput>> => {
     return executeSafeAction(params.name, async () => {
       const session = await getCurrentSessionFromCookies();
       if (!session) {

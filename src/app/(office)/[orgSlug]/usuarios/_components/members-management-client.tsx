@@ -152,8 +152,8 @@ export function MembersManagementClient({
     startTransition(async () => {
       const result = await updateMemberRoleAction({
         orgSlug,
-        membershipId,
-        role: newRole,
+        targetMembershipId: membershipId,
+        newRole,
       });
 
       if (!result.ok) {
@@ -173,7 +173,7 @@ export function MembersManagementClient({
     startTransition(async () => {
       const result = await setMemberStatusAction({
         orgSlug,
-        membershipId,
+        targetMembershipId: membershipId,
         status: nextStatus,
       });
 
