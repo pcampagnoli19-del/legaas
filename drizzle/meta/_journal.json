@@ -15,6 +15,13 @@
       "when": 1793943479727,
       "tag": "0001_enable_rls_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793944435514,
+      "tag": "0002_auth_tenant_bootstrap_functions",
+      "breakpoints": true
     }
   ]
 }
