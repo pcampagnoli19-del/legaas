@@ -38,7 +38,7 @@ import {
   CERTIFICATE_TYPE_LABELS,
   CERTIFICATE_TYPES,
   type CertificateTypeCode,
-} from '@/server/modules/certificates/groq-extractor';
+} from '@/server/modules/certificates/types';
 import type {
   CertificateValidityStatus,
   ExpirationAlertsDashboard,
