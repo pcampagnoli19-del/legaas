@@ -1,7 +1,9 @@
 'use client';
 
 import {
+  Briefcase,
   Building2,
+  Landmark,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -71,6 +73,16 @@ export function OfficeShell({
       label: 'Visão Geral',
       href: `/${orgSlug}`,
       icon: LayoutDashboard,
+    },
+    {
+      label: 'Clientes',
+      href: `/${orgSlug}/clientes`,
+      icon: Briefcase,
+    },
+    {
+      label: 'Empresas',
+      href: `/${orgSlug}/empresas`,
+      icon: Landmark,
     },
     ...(isOrgAdmin
       ? [
